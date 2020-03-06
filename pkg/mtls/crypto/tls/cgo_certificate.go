@@ -164,11 +164,30 @@ static int SSL_CTX_set0_chain_cgo(SSL_CTX *ctx, STACK_OF(X509) *chain)
 	return SSL_CTX_set0_chain(ctx, chain);
 }
 
+static int SSL_CTX_set1_chain_cgo(SSL_CTX *ctx, STACK_OF(X509) *chain)
+{
+	return SSL_CTX_set1_chain(ctx, chain);
+}
+
 static int SSL_CTX_build_cert_chain_cgo(SSL_CTX *ctx, int chflags)
 {
     return SSL_CTX_build_cert_chain(ctx, chflags);
 }
 
+static int SSL_set0_chain_cgo(SSL *ssl, STACK_OF(X509) *chain)
+{
+	return SSL_set0_chain(ssl, chain);
+}
+
+static int SSL_set1_chain_cgo(SSL *ssl, STACK_OF(X509) *chain)
+{
+	return SSL_set1_chain(ssl, chain);
+}
+
+static int SSL_build_cert_chain_cgo(SSL *ssl, int chflags)
+{
+    return SSL_build_cert_chain(ssl, chflags);
+}
 */
 import "C"
 import (
@@ -215,6 +234,11 @@ func TranslateRawByteToSslX509Chain(buf []byte) (*C.struct_stack_st_X509, error)
 	sk := C.BabaSSL_read_Certificate_chain_bytes(unsafe.Pointer(&buf[0]), C.int(len(buf)))
 	if sk == nil {
 		return nil, errors.New("TranslateRawByteToSslX509Chain error")
+	}
+
+	if int(C.sk_X509_num(sk)) <= 1 {
+		//if only have one cert, need not build cert chain
+		return nil, nil
 	}
 
 	return sk, nil
@@ -308,9 +332,6 @@ func TranslateSslX509ToRawByte(x *C.X509) ([]byte, error) {
 	}
 
 	cert_byte := buf[:certLen]
-	// rawBlock, rest := pem.Decode(cert_byte)
-	// rawByte := rawBlock.Bytes
-	// print(rest)
 	return cert_byte, nil
 }
 
@@ -441,7 +462,7 @@ func tranGoRawByteCertsToSslCertChain(certs [][]byte) (*C.struct_stack_st_X509, 
 	return sk, nil
 }
 
-func setSslCertAndPkeyToCtx(sslCtx *C.SSL_CTX, sslCert *SslCertificate) error {
+func setSslCertAndPkeyToSslCtx(sslCtx *C.SSL_CTX, sslCert *SslCertificate) error {
 	var ret int
 	ret = int(C.SSL_CTX_use_certificate(sslCtx, sslCert.Cert))
 	if ret <= 0 {
@@ -453,14 +474,43 @@ func setSslCertAndPkeyToCtx(sslCtx *C.SSL_CTX, sslCert *SslCertificate) error {
 		return errors.New("serverSslCtxInit error, SSL_CTX_use_PrivateKey error")
 	}
 
-	ret = int(C.SSL_CTX_set0_chain_cgo(sslCtx, sslCert.CertChain))
-	if ret <= 0 {
-		return errors.New("serverSslCtxInit error, SSL_CTX_set0_chain error")
+	if sslCert.CertChain != nil {
+		ret = int(C.SSL_CTX_set1_chain_cgo(sslCtx, sslCert.CertChain))
+		if ret <= 0 {
+			return errors.New("serverSslCtxInit error, SSL_CTX_set0_chain error")
+		}
+
+		ret = int(C.SSL_CTX_build_cert_chain_cgo(sslCtx, C.SSL_BUILD_CHAIN_FLAG_CHECK))
+		if ret <= 0 {
+			return errors.New("serverSslCtxInit error, SSL_CTX_build_cert_chain error")
+		}
 	}
 
-	ret = int(C.SSL_CTX_build_cert_chain_cgo(sslCtx, C.SSL_BUILD_CHAIN_FLAG_CHECK))
+	return nil
+}
+
+func setSslCertAndPkeyToSsl(ssl *C.SSL, sslCert *SslCertificate) error {
+	var ret int
+	ret = int(C.SSL_use_certificate(ssl, sslCert.Cert))
 	if ret <= 0 {
-		return errors.New("serverSslCtxInit error, SSL_CTX_build_cert_chain error")
+		return errors.New("serverSslCtxInit error, SSL_CTX_use_certificate error")
+	}
+
+	ret = int(C.SSL_use_PrivateKey(ssl, sslCert.Pkey))
+	if ret <= 0 {
+		return errors.New("serverSslCtxInit error, SSL_CTX_use_PrivateKey error")
+	}
+
+	if sslCert.CertChain != nil {
+		ret = int(C.SSL_set1_chain_cgo(ssl, sslCert.CertChain))
+		if ret <= 0 {
+			return errors.New("serverSslCtxInit error, SSL_CTX_set0_chain error")
+		}
+
+		ret = int(C.SSL_build_cert_chain_cgo(ssl, C.SSL_BUILD_CHAIN_FLAG_CHECK))
+		if ret <= 0 {
+			return errors.New("serverSslCtxInit error, SSL_CTX_build_cert_chain error")
+		}
 	}
 
 	return nil

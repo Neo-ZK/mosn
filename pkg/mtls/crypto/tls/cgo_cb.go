@@ -72,7 +72,6 @@ static int SSL_client_hello_alpn_ext_to_gostring(SSL *s, void *gostring)
 */
 import "C"
 import (
-	"errors"
 	"unsafe"
 
 	"mosn.io/mosn/pkg/mtls/crypto/x509"
@@ -117,19 +116,25 @@ func setTlsConfigInfoToSsl(ssl *C.SSL, conf *Config) error {
 	if ctxErr != nil {
 		return ctxErr
 	}
+
 	if len(conf.Certificates) != 0 {
-		cert := conf.Certificates[0].BabasslCert.Cert
-		if cert != nil {
-			if int(C.SSL_use_certificate(ssl, cert)) <= 0 {
-				return errors.New("error happen in setTlsConfigInfoToSsl set cert")
-			}
+		sslCert := conf.Certificates[0].BabasslCert
+		err := setSslCertAndPkeyToSsl(ssl, sslCert)
+		if err != nil {
+			return err
 		}
-		pkey := conf.Certificates[0].BabasslCert.Pkey
-		if pkey != nil {
-			if int(C.SSL_use_PrivateKey(ssl, pkey)) <= 0 {
-				return errors.New("error happen in setTlsConfigInfoToSsl set cert")
-			}
-		}
+		// cert := conf.Certificates[0].BabasslCert.Cert
+		// if cert != nil {
+		// 	if int(C.SSL_use_certificate(ssl, cert)) <= 0 {
+		// 		return errors.New("error happen in setTlsConfigInfoToSsl set cert")
+		// 	}
+		// }
+		// pkey := conf.Certificates[0].BabasslCert.Pkey
+		// if pkey != nil {
+		// 	if int(C.SSL_use_PrivateKey(ssl, pkey)) <= 0 {
+		// 		return errors.New("error happen in setTlsConfigInfoToSsl set cert")
+		// 	}
+		// }
 	}
 
 	if conf.ClientAuth == RequestClientCert || conf.ClientAuth == RequireAnyClientCert {

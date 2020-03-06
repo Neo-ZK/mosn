@@ -90,7 +90,7 @@ func (ctx *SslCtx) serverSslCtxInit(config *Config) error {
 
 	if len(config.Certificates) > 0 {
 		sslCert := config.Certificates[0].BabasslCert
-		err := setSslCertAndPkeyToCtx(sslCtx, sslCert)
+		err := setSslCertAndPkeyToSslCtx(sslCtx, sslCert)
 		if err != nil {
 			return err
 		}
@@ -220,14 +220,9 @@ func (ctx *SslCtx) clientSslCtxInit(config *Config) error {
 
 	if len(config.Certificates) > 0 {
 		sslCert := config.Certificates[0].BabasslCert
-		ret = int(C.SSL_CTX_use_certificate(sslCtx, sslCert.Cert))
-		if ret < 0 {
-			return errors.New("SSL_CTX_use_certificate error")
-		}
-
-		ret = int(C.SSL_CTX_use_PrivateKey(sslCtx, sslCert.Pkey))
-		if ret < 0 {
-			return errors.New("SSL_CTX_use_certificate error")
+		err := setSslCertAndPkeyToSslCtx(sslCtx, sslCert)
+		if err != nil {
+			return err
 		}
 	}
 
