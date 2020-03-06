@@ -18,14 +18,14 @@
 package mtls
 
 import (
-	"crypto/x509"
 	"fmt"
 	"strings"
 
-	"mosn.io/mosn/pkg/config/v2"
+	v2 "mosn.io/mosn/pkg/config/v2"
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/mtls/crypto/tls"
 	"mosn.io/mosn/pkg/types"
+	"mosn.io/mosn/pkg/mtls/crypto/x509"
 )
 
 type secretInfo struct {

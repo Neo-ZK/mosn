@@ -18,7 +18,6 @@
 package mtls
 
 import (
-	"crypto/x509"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -26,9 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"mosn.io/mosn/pkg/config/v2"
+	v2 "mosn.io/mosn/pkg/config/v2"
 	"mosn.io/mosn/pkg/mtls/certtool"
 	"mosn.io/mosn/pkg/mtls/crypto/tls"
+	"mosn.io/mosn/pkg/mtls/crypto/x509"
 )
 
 func pass(resp *http.Response, err error) bool {
