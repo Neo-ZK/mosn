@@ -76,7 +76,6 @@ char *get_ssl_alpn_select(SSL *ssl)
 	}
 	return alpn;
 }
-
 */
 import "C"
 import (
@@ -135,4 +134,46 @@ func getSslAlpnNegotiated(ssl *C.SSL) (string, bool) {
 	}
 
 	return NegotiatedProtocol, isMutual
+}
+
+func parseAlpnFromExtension(packet []byte) ([]string, error) {
+	if len(packet) == 0 {
+		return nil, nil
+	}
+
+	if len(packet) > 0 && len(packet) < 2 {
+		return nil, errors.New("parseAlpnFromExtension error, error packet format")
+	}
+	totalLen, err := PacketPeek2byteToLen(packet)
+	if err != nil {
+		return nil, err
+	}
+	if totalLen == 0 {
+		return nil, nil
+	}
+	packet = packet[2:]
+	var res []string
+
+	for {
+		if len(packet) > 0 {
+			sub_len, err := PacketPeek1byteToLen(packet)
+			if err != nil {
+				return nil, err
+			}
+			if int(1+sub_len) > len(packet) {
+				return nil, errors.New("parseAlpnFromExtension error, error alpn format ")
+			}
+			protoByte := packet[1 : 1+sub_len]
+			protoString := BytesToString(protoByte)
+			res = append(res, protoString)
+			if int(1+sub_len) == len(packet) {
+				break
+			} else {
+				packet = packet[1+sub_len:]
+			}
+		} else {
+			break
+		}
+	}
+	return res, nil
 }

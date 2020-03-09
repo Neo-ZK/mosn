@@ -178,3 +178,13 @@ void ssl_ctx_set_defaultClientServerNameCallBack(SSL_CTX *ctx)
 {
 	SSL_CTX_set_tlsext_servername_callback(ctx, defaultClientServerNameCallBack);
 }
+
+uint16_t packet_peek_2byte_len(const unsigned char* str)
+{
+	uint16_t res;
+
+	res = ((uint16_t)(*str)) << 8;
+	res |= *(str + 1);
+
+	return res;
+}

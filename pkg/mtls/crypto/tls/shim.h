@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <signal.h>
+#include <stdint.h>
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
@@ -168,3 +169,6 @@ extern void ssl_ctx_set_client_hello_cb_GetConfigForClient(SSL_CTX *ctx, void *a
 
 /* sni cb about defaultClientServerNameCallBack */
 extern void ssl_ctx_set_defaultClientServerNameCallBack(SSL_CTX *ctx);
+
+/* packet extract func */
+uint16_t packet_peek_2byte_len(const unsigned char* str);

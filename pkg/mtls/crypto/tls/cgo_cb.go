@@ -56,11 +56,11 @@ static int SSL_client_hello_servername_ext_to_gostring(SSL *s, void *gostring)
 static int SSL_client_hello_alpn_ext_to_gostring(SSL *s, void *gostring)
 {
 	const unsigned char *p = NULL;
-	int len = 0;
+	size_t len = 0;
 	int ret = 0;
 
 	ret = SSL_client_hello_get0_ext(s, TLSEXT_TYPE_application_layer_protocol_negotiation,
-		                            &p, (size_t *)(&len));
+		                            &p, &len);
 	if (ret <= 0 || len <= 0) {
 		return 0;
 	}
@@ -123,18 +123,6 @@ func setTlsConfigInfoToSsl(ssl *C.SSL, conf *Config) error {
 		if err != nil {
 			return err
 		}
-		// cert := conf.Certificates[0].BabasslCert.Cert
-		// if cert != nil {
-		// 	if int(C.SSL_use_certificate(ssl, cert)) <= 0 {
-		// 		return errors.New("error happen in setTlsConfigInfoToSsl set cert")
-		// 	}
-		// }
-		// pkey := conf.Certificates[0].BabasslCert.Pkey
-		// if pkey != nil {
-		// 	if int(C.SSL_use_PrivateKey(ssl, pkey)) <= 0 {
-		// 		return errors.New("error happen in setTlsConfigInfoToSsl set cert")
-		// 	}
-		// }
 	}
 
 	if conf.ClientAuth == RequestClientCert || conf.ClientAuth == RequireAnyClientCert {
@@ -166,6 +154,12 @@ func setTlsConfigInfoToSslCtx(ctx *C.SSL_CTX, conf *Config) error {
 		configPtr := cgoPointerSave(conf)
 		C.ssl_ctx_set_cert_verify_callback_ServerVerifyBackForVerifyPeerCertificate(ctx, configPtr)
 	}
+	if conf.NextProtos != nil {
+		err := serverSslCtxSetAlpnProtos(ctx, conf.NextProtos)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -187,13 +181,23 @@ func transferBabasslInfoToTlsClientHelloInfo(ssl *C.SSL) ClientHelloInfo {
 	//ch.SupportedPoints=
 	//ch.SignatureSchemes
 	alpn_buf := make([]byte, 4096)
-	alpn_len := int(C.SSL_client_hello_alpn_ext_to_gostring(ssl, unsafe.Pointer(&servername_buf[0])))
-	alpn := BytesToString(alpn_buf[:alpn_len])
+	alpn_len := int(C.SSL_client_hello_alpn_ext_to_gostring(ssl, unsafe.Pointer(&alpn_buf[0])))
+	print(alpn_len)
+	alpn, err := parseAlpnFromExtension(alpn_buf[:alpn_len])
+	if err != nil {
+		ch.SupportedProtos = alpn
+	} else {
+		if BabasslPrintTraceTag.IsOpen() {
+			print(err)
+		}
+	}
+
 	//alpnC := C.get_ssl_alpn_info(ssl)
 	//todo translate alpnC(char *) to []gostring
-	if alpn != "" {
-		ch.SupportedProtos = []string{alpn}
-	}
+	// if alpn != "" {
+	// 	print(alpn)
+	// 	ch.SupportedProtos = []string{alpn}
+	// }
 	//ch.SupportedProtos = C.GoString(alpn)
 	//ch.SupportedVersions
 	return ch
