@@ -66,15 +66,16 @@ void set_alpn_cb_to_ctx(SSL_CTX *ctx, void *args)
 	SSL_CTX_set_alpn_select_cb(ctx, alpn_cb, args);
 }
 
-char *get_ssl_alpn_select(SSL *ssl)
+static unsigned int get_ssl_alpn_select(SSL *ssl, void *buf)
 {
-	char *alpn;
+	const unsigned char *alpn;
 	unsigned int len;
-	SSL_get0_alpn_selected(ssl, (const unsigned char **)(&alpn), &len);
+	SSL_get0_alpn_selected(ssl, &alpn, &len);
 	if (len == 0) {
-		return NULL;
+		return 0;
 	}
-	return alpn;
+	memcpy(buf, alpn, len);
+	return len;
 }
 */
 import "C"
@@ -122,16 +123,14 @@ func serverSslCtxSetAlpnProtos(ctx *C.SSL_CTX, NextProtos []string) error {
 }
 
 func getSslAlpnNegotiated(ssl *C.SSL) (string, bool) {
-	proto := C.get_ssl_alpn_select(ssl)
-	var NegotiatedProtocol string
-	var isMutual bool
-	if proto != nil {
-		NegotiatedProtocol = C.GoString(proto)
-		isMutual = true
-	} else {
-		NegotiatedProtocol = ""
-		isMutual = false
+	buf := make([]byte, 256)
+	len := int(C.get_ssl_alpn_select(ssl, unsafe.Pointer(&buf[0])))
+	if len == 0 {
+		return "", false
 	}
+	buf = buf[:len]
+	NegotiatedProtocol := BytesToString(buf)
+	isMutual := true
 
 	return NegotiatedProtocol, isMutual
 }
@@ -140,7 +139,6 @@ func parseAlpnFromExtension(packet []byte) ([]string, error) {
 	if len(packet) == 0 {
 		return nil, nil
 	}
-
 	if len(packet) > 0 && len(packet) < 2 {
 		return nil, errors.New("parseAlpnFromExtension error, error packet format")
 	}

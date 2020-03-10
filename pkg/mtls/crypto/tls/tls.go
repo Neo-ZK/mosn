@@ -38,6 +38,7 @@ func Server(conn net.Conn, config *Config) *Conn {
 			if err != nil {
 				panic(err)
 			}
+			sslCtx.Conn = conn
 			config.CgoBabasslCtx = &sslCtx
 		}
 		return &Conn{conn: conn, config: config}

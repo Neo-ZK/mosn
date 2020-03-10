@@ -163,6 +163,9 @@ extern void ssl_ctx_set_hostname_cert_verify_cb(SSL_CTX *ctx, void *arg);
 
 /* cert verify cb about VerifyPeerCertificate*/
 extern void ssl_ctx_set_cert_verify_callback_ServerVerifyBackForVerifyPeerCertificate(SSL_CTX *ctx, void *arg);
+extern int ssl_cert_verify_call_back_always_success(int i, X509_STORE_CTX *x);
+extern void ssl_set_cert_verify_require_peer_cert(SSL *ssl);
+extern void ssl_ctx_set_cert_verify_require_peer_cert(SSL_CTX *ctx);
 
 /* clienthello cb about GetConfigForClient*/
 extern void ssl_ctx_set_client_hello_cb_GetConfigForClient(SSL_CTX *ctx, void *arg);

@@ -30,6 +30,7 @@ const (
 	VersionTLS10 = 0x0301
 	VersionTLS11 = 0x0302
 	VersionTLS12 = 0x0303
+	VersionTLS13 = 0x0304
 )
 
 const (
@@ -39,7 +40,7 @@ const (
 	maxHandshake    = 65536        // maximum handshake we support (protocol max is 16 MB)
 
 	minVersion = VersionTLS10
-	maxVersion = VersionTLS12
+	maxVersion = VersionTLS13
 )
 
 // TLS record types.

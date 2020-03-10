@@ -163,6 +163,24 @@ void ssl_ctx_set_hostname_cert_verify_cb(SSL_CTX *ctx, void *arg)
 			                         arg);
 }
 
+int ssl_cert_verify_call_back_always_success(int i, X509_STORE_CTX *x)
+{
+	return 1;
+}
+
+void ssl_set_cert_verify_require_peer_cert(SSL *ssl)
+{
+	SSL_set_verify(ssl, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+		ssl_cert_verify_call_back_always_success);
+}
+
+void ssl_ctx_set_cert_verify_require_peer_cert(SSL_CTX *ctx)
+{
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+		ssl_cert_verify_call_back_always_success);
+}
+
+
 void ssl_ctx_set_client_hello_cb_GetConfigForClient(SSL_CTX *ctx, void *arg) {
 	SSL_CTX_set_client_hello_cb(ctx,
 	                            ServerClientHelloCallBackForGetConfigForClient, arg);

@@ -25,6 +25,7 @@ type SslCertificate struct {
 type SslCtx struct {
 	sslCtx     *C.SSL_CTX
 	ServerName string
+	Conn       net.Conn
 }
 
 //use to get ssl handshake state
@@ -127,14 +128,12 @@ func (ctx *SslCtx) serverSslCtxInit(config *Config) error {
 	}
 
 	if config.GetConfigForClient != nil {
-		ConfigForClientPtr := cgoPointerSave(config.GetConfigForClient)
+		ConfigForClientPtr := cgoPointerSave(config)
 		C.ssl_ctx_set_client_hello_cb_GetConfigForClient(sslCtx, ConfigForClientPtr)
 	}
 
 	if config.ClientAuth == RequestClientCert || config.ClientAuth == RequireAnyClientCert {
-		C.SSL_CTX_set_verify(sslCtx, C.SSL_VERIFY_PEER|C.SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nil)
-		//to do
-		//set a verifycallback always return 1
+		C.ssl_ctx_set_cert_verify_require_peer_cert(sslCtx)
 	} else if config.ClientAuth >= VerifyClientCertIfGiven {
 		C.SSL_CTX_set_verify(sslCtx, C.SSL_VERIFY_PEER, nil)
 	} else if config.ClientAuth == RequireAndVerifyClientCert {

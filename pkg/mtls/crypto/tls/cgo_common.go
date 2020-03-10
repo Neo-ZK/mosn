@@ -42,7 +42,7 @@ func CloseBabasslTag() {
 }
 
 var BabasslPrintTraceTag = &BabasslTag{
-	tag: true,
+	tag: false,
 }
 
 func OpenBabasslPrintTraceTag() {
