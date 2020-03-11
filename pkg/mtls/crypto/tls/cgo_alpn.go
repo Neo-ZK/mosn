@@ -3,16 +3,17 @@ package tls
 /*
 #include "shim.h"
 
-unsigned char *next_protos_parse(unsigned int *outlen, const char *in)
+static int next_protos_parse_to_go_buf(const char *in, void *buf)
 {
     size_t len;
     unsigned char *out;
     size_t i, start = 0;
-    size_t skipped = 0;
+	size_t skipped = 0;
+	int outlen;
 
     len = strlen(in);
     if (len == 0 || len >= 65535)
-        return NULL;
+        return 0;
 
     out = OPENSSL_malloc(len + 1);
     for (i = 0; i <= len; ++i) {
@@ -24,7 +25,7 @@ unsigned char *next_protos_parse(unsigned int *outlen, const char *in)
             }
             if (i - start > 255) {
                 OPENSSL_free(out);
-                return NULL;
+                return 0;
             }
             out[start-skipped] = (unsigned char)(i - start);
             start = i + 1;
@@ -35,11 +36,13 @@ unsigned char *next_protos_parse(unsigned int *outlen, const char *in)
 
     if (len <= skipped) {
         OPENSSL_free(out);
-        return NULL;
+        return 0;
     }
 
-    *outlen = len + 1 - skipped;
-    return out;
+	outlen = len + 1 - skipped;
+	memcpy(buf, out, outlen);
+	OPENSSL_free(out);
+    return outlen;
 }
 
 typedef struct tlsextalpnctx_st {
@@ -77,6 +80,12 @@ static unsigned int get_ssl_alpn_select(SSL *ssl, void *buf)
 	memcpy(buf, alpn, len);
 	return len;
 }
+
+void OPENSSL_free_cgo(void *addr)
+{
+	OPENSSL_free(addr);
+}
+
 */
 import "C"
 import (
@@ -90,12 +99,14 @@ func clientSslCtxSetAlpnProtos(ctx *C.SSL_CTX, NextProtos []string) error {
 		alpnProtos += str
 		alpnProtos += ","
 	}
-	len := C.uint(1)
-	alpn := C.next_protos_parse(&len, C.CString(alpnProtos))
-	if alpn == nil {
+	buf := make([]byte, 256)
+	len := int(C.next_protos_parse_to_go_buf(C.CString(alpnProtos), unsafe.Pointer(&buf[0])))
+	if len <= 0 {
 		return errors.New("client set alpn protos error")
 	}
-	ret := C.SSL_CTX_set_alpn_protos(ctx, alpn, len)
+	alpn := C.CString(BytesToString(buf[:len]))
+	alpnptr := (*C.uchar)(unsafe.Pointer(alpn))
+	ret := C.SSL_CTX_set_alpn_protos(ctx, alpnptr, C.uint(len))
 	if int(ret) != 0 {
 		return errors.New("client set alpn protos error")
 	}
@@ -108,17 +119,20 @@ func serverSslCtxSetAlpnProtos(ctx *C.SSL_CTX, NextProtos []string) error {
 		alpnProtos += str
 		alpnProtos += ","
 	}
-	len := C.uint(1)
-	alpn := C.next_protos_parse(&len, C.CString(alpnProtos))
-	if alpn == nil {
-		return errors.New("server set alpn protos error")
+
+	buf := make([]byte, 256)
+	len := int(C.next_protos_parse_to_go_buf(C.CString(alpnProtos), unsafe.Pointer(&buf[0])))
+	if len <= 0 {
+		return errors.New("client set alpn protos error")
 	}
+	alpn := C.CString(BytesToString(buf[:len]))
+	alpnptr := (*C.uchar)(unsafe.Pointer(alpn))
+
 	var alpnctx C.tlsextalpnctx
-	alpnctx.data = alpn
-	alpnctx.len = len
+	alpnctx.data = alpnptr
+	alpnctx.len = C.uint(len)
 
 	C.set_alpn_cb_to_ctx(ctx, unsafe.Pointer(&alpnctx))
-
 	return nil
 }
 

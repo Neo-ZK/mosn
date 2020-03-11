@@ -41,8 +41,6 @@ var Tls13Cipher = []*Ciphersuites{
 	{TLS_AES_128_GCM_SHA256, "TLS_AES_128_GCM_SHA256"},
 	{TLS_AES_256_GCM_SHA384, "TLS_AES_256_GCM_SHA384"},
 	{TLS_CHACHA20_POLY1305_SHA256, "TLS_CHACHA20_POLY1305_SHA256"},
-	{TLS_SM4_GCM_SM3, "TLS_SM4_GCM_SM3"},
-	{TLS_SM4_CCM_SM3, "TLS_SM4_CCM_SM3"},
 }
 
 func SslCtxSetCiphersuites(ctx *C.SSL_CTX, cipherSuites []uint16) error {
@@ -94,6 +92,11 @@ func SslCtxSetDefaultCipher(ctx *C.SSL_CTX) error {
 
 	for _, tls13ciph := range Tls13Cipher {
 		tls13cipherString += tls13ciph.name
+		tls13cipherString += ":"
+	}
+
+	for _, tls13gmciph := range Tls13GmCipher {
+		tls13cipherString += tls13gmciph.name
 		tls13cipherString += ":"
 	}
 

@@ -7,7 +7,6 @@ import (
 	"unsafe"
 )
 
-//use to determine whether use babassl, default close
 type BabasslTag struct {
 	tag bool
 	mtx sync.Mutex
@@ -29,6 +28,7 @@ func (tag *BabasslTag) IsOpen() bool {
 	return tag.tag
 }
 
+//use to determine whether use babassl, default close
 var useBabasslTag = &BabasslTag{
 	tag: true,
 }
@@ -41,6 +41,7 @@ func CloseBabasslTag() {
 	useBabasslTag.Close()
 }
 
+//use to determine whether open print trace, default close
 var BabasslPrintTraceTag = &BabasslTag{
 	tag: false,
 }

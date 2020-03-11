@@ -11,9 +11,6 @@
 
 #include "_cgo_export.h"
 
-/*
- * Functions defined in other .c files
- */
 extern int go_init_locks();
 extern void go_thread_locking_callback(int, int, const char*, int);
 extern unsigned long go_thread_id_callback();
@@ -28,14 +25,6 @@ void X_BIO_set_data(BIO* bio, void* data) {
 
 void* X_BIO_get_data(BIO* bio) {
 	return BIO_get_data(bio);
-}
-
-EVP_MD_CTX* X_EVP_MD_CTX_new() {
-	return EVP_MD_CTX_new();
-}
-
-void X_EVP_MD_CTX_free(EVP_MD_CTX* ctx) {
-	EVP_MD_CTX_free(ctx);
 }
 
 static int x_bio_create(BIO *b) {
@@ -97,12 +86,6 @@ int x_bio_init_methods() {
 
 	return 0;
 }
-
-/*
- ************************************************
- * common implementation
- ************************************************
- */
 
 int X_shim_init() {
 	int rc = 0;

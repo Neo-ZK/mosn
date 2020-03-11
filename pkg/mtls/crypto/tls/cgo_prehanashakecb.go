@@ -3,17 +3,6 @@ package tls
 /*
 #include "shim.h"
 
-static char *get_ssl_alpn_info(SSL *ssl)
-{
-	char **alpn;
-	unsigned len;
-	BABASSL_get0_alpn_proposed(ssl, (const unsigned char**)alpn, &len);
-	if (len != 0) {
-		return *alpn;
-	}
-	return NULL;
-}
-
 static int SSL_client_hello_servername_ext_to_gostring(SSL *s, void *gostring)
 {
 	const unsigned char *p = NULL;
@@ -117,6 +106,7 @@ func ServerClientHelloCallBackForGetConfigForClient(ssl *C.SSL, al *C.int, arg u
 		}
 	}
 
+	//call go-native GetCertificate
 	if conf.GetCertificate != nil {
 		cert, err := conf.GetCertificate(ch)
 		if err != nil {

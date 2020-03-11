@@ -33,24 +33,9 @@ import (
 	"unsafe"
 )
 
-type SniClientArgs struct {
-}
-
-type SniServerArgs struct {
-	certMap map[string]*C.X509
-}
-
-func SetSslCtxServerName() {
-
-}
-
 //export defaultClientServerNameCallBack
 func defaultClientServerNameCallBack(ssl *C.SSL, i *C.int, arg unsafe.Pointer) C.int {
 	return 1
-}
-
-func defaultServerServerNameCallBack() {
-
 }
 
 func ClientSetSslCtxServerNameCallBack(ctx *C.SSL_CTX, arg string) {

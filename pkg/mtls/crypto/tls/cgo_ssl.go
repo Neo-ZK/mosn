@@ -15,13 +15,16 @@ import (
 	"mosn.io/mosn/pkg/mtls/crypto/x509"
 )
 
+// SslCertificate record cert information of ssl, actually it would be set into
+// tls.Certificate when read x509keypair
 type SslCertificate struct {
 	Cert      *C.X509
 	CertChain *C.struct_stack_st_X509
 	Pkey      *C.EVP_PKEY
 }
 
-//SslCtx is *SSL_CTX
+// SslCtx record *SSL_CTX and some neccessary info about handshake, it would be init
+// when call Client() or Server()
 type SslCtx struct {
 	sslCtx     *C.SSL_CTX
 	ServerName string
@@ -54,7 +57,7 @@ type SslConnectionState struct {
 	TLSUnique []byte
 }
 
-//Ssl record *SSL and if has finish handshake
+//Ssl record *SSL and if has finish handshake, it would be init when calling Handshake()
 type Ssl struct {
 	mtx               sync.Mutex
 	handshakeComplete uint32
@@ -242,22 +245,22 @@ func (ctx *SslCtx) Init(config *Config, isClient bool) error {
 	}
 }
 
-func (ctx *SslCtx) Clone() *SslCtx {
-	if ctx == nil {
-		return nil
-	}
-	sslCtxNew := C.SSL_CTX_dup(ctx.sslCtx)
-	if unsafe.Pointer(sslCtxNew) == C.NULL {
-		panic("SSL_CTX_dup error")
-	}
-	ctxNew := &SslCtx{
-		sslCtx: sslCtxNew,
-	}
-	runtime.SetFinalizer(ctxNew, func(ctxNew *SslCtx) {
-		C.SSL_CTX_free(ctxNew.sslCtx)
-	})
-	return ctxNew
-}
+// func (ctx *SslCtx) Clone() *SslCtx {
+// 	if ctx == nil {
+// 		return nil
+// 	}
+// 	sslCtxNew := C.SSL_CTX_dup(ctx.sslCtx)
+// 	if unsafe.Pointer(sslCtxNew) == C.NULL {
+// 		panic("SSL_CTX_dup error")
+// 	}
+// 	ctxNew := &SslCtx{
+// 		sslCtx: sslCtxNew,
+// 	}
+// 	runtime.SetFinalizer(ctxNew, func(ctxNew *SslCtx) {
+// 		C.SSL_CTX_free(ctxNew.sslCtx)
+// 	})
+// 	return ctxNew
+// }
 
 func defaultClientSslCtx() *SslCtx {
 	sslCtx := C.SSL_CTX_new(C.TLS_client_method())

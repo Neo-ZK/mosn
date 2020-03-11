@@ -27,7 +27,7 @@ import (
 // Support Protocols version
 const (
 	minProtocols uint16 = tls.VersionTLS10
-	maxProtocols uint16 = tls.VersionTLS13
+	maxProtocols uint16 = tls.VersionTLS12
 )
 
 // version string map
@@ -36,7 +36,6 @@ var version = map[string]uint16{
 	"tlsv1_0":  tls.VersionTLS10,
 	"tlsv1_1":  tls.VersionTLS11,
 	"tlsv1_2":  tls.VersionTLS12,
-	"tlsv1_3":  tls.VersionTLS13,
 }
 
 // Curves

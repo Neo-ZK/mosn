@@ -3,7 +3,7 @@ package tls
 /*
 #include "shim.h"
 
-static X509 *BabaSSL_read_Certificate_file(const char *cert_file, int type)
+static X509 *SSL_read_Certificate_file(const char *cert_file, int type)
 {
     int j;
     BIO *in;
@@ -11,12 +11,10 @@ static X509 *BabaSSL_read_Certificate_file(const char *cert_file, int type)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, cert_file) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, ERR_R_SYS_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_ASN1) {
@@ -26,12 +24,10 @@ static X509 *BabaSSL_read_Certificate_file(const char *cert_file, int type)
         j = ERR_R_PEM_LIB;
         x = PEM_read_bio_X509(in, NULL, NULL, NULL);
     } else {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
 
     if (x == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, j);
         goto end;
     }
 end:
@@ -39,7 +35,7 @@ end:
     return x;
 }
 
-static EVP_PKEY *BabaSSL_read_PrivateKey_file(const char *pkey_file, int type)
+static EVP_PKEY *SSL_read_PrivateKey_file(const char *pkey_file, int type)
 {
     int j = 0;
     BIO *in;
@@ -47,12 +43,10 @@ static EVP_PKEY *BabaSSL_read_PrivateKey_file(const char *pkey_file, int type)
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
         goto end;
     }
 
     if (BIO_read_filename(in, pkey_file) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_SYS_LIB);
         goto end;
     }
     if (type == SSL_FILETYPE_PEM) {
@@ -62,11 +56,9 @@ static EVP_PKEY *BabaSSL_read_PrivateKey_file(const char *pkey_file, int type)
         j = ERR_R_ASN1_LIB;
         pkey = d2i_PrivateKey_bio(in, NULL);
     } else {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
     if (pkey == NULL) {
-        SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, j);
         goto end;
     }
  end:
@@ -200,9 +192,9 @@ import (
 	"mosn.io/mosn/pkg/mtls/crypto/x509"
 )
 
-//CgoBabasslReadCertificateFile read cetificate from file
-func CgoBabasslReadCertificateFile(cert_file string) (*C.X509, error) {
-	x := C.BabaSSL_read_Certificate_file(C.CString(cert_file), C.SSL_FILETYPE_PEM)
+//SslReadCertificateFile read cetificate from file
+func SslReadCertificateFile(certFile string) (*C.X509, error) {
+	x := C.SSL_read_Certificate_file(C.CString(certFile), C.SSL_FILETYPE_PEM)
 	if x == nil {
 		return nil, errors.New("read certificat error")
 	}
@@ -210,9 +202,9 @@ func CgoBabasslReadCertificateFile(cert_file string) (*C.X509, error) {
 	return x, nil
 }
 
-//CgoBabasslReadPrivateKeyFile read pkey from file
-func CgoBabasslReadPrivateKeyFile(pkey_file string) (*C.EVP_PKEY, error) {
-	pkey := C.BabaSSL_read_PrivateKey_file(C.CString(pkey_file), C.SSL_FILETYPE_PEM)
+//SslReadPrivateKeyFile read pkey from file
+func SslReadPrivateKeyFile(pkeyFile string) (*C.EVP_PKEY, error) {
+	pkey := C.SSL_read_PrivateKey_file(C.CString(pkeyFile), C.SSL_FILETYPE_PEM)
 
 	if pkey == nil {
 		return nil, errors.New("read certificat error")
